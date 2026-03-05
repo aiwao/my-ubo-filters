@@ -31,7 +31,7 @@ jobs:
           AFTER="${{ github.sha }}"
 
           if [[ "$BEFORE" =~ ^0+$ ]]; then
-            BEFORE="$(git rev-parse HEAD~1)"
+            BEFORE="$(git hash-object -t tree /dev/null)"
           fi
 
           header="! Version: git-${SHORTSHA}"
