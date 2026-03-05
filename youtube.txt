@@ -1,0 +1,8 @@
+! Title: youtube filters by aiwao
+! Homepage: https://github.com/aiwao/my-ubo-filters
+
+! Disable youtube shorts feed
+youtube.com##ytd-rich-section-renderer.ytd-rich-grid-renderer.style-scope
+
+! Redirect urlskip
+||youtube.com/redirect?$urlskip=?q -uricomponent

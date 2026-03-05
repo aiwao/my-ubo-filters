@@ -1,0 +1,78 @@
+name: Auto version
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  insert:
+    if: ${{ !contains(github.event.head_commit.message, '[bot]') }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute short sha
+        run: echo "SHORTSHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+
+      - name: Set version header
+        id: changed
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BEFORE="${{ github.event.before }}"
+          AFTER="${{ github.sha }}"
+
+          if [[ "$BEFORE" =~ ^0+$ ]]; then
+            BEFORE="$(git rev-parse HEAD~1)"
+          fi
+
+          header="! Version: git-${SHORTSHA}"
+
+          git diff --name-only --diff-filter=ACMR "$BEFORE" "$AFTER" \
+            | while IFS= read -r f; do
+                [[ -f "$f" ]] || continue
+
+                if [[ "$f" == .github/workflows/* ]]; then
+                  echo "Skip workflow file: $f"
+                  continue
+                fi
+
+                if grep -Iq . "$f"; then
+                  :
+                else
+                  echo "Skip binary: $f"
+                  continue
+                fi
+
+                first="$(head -n 1 "$f" || true)"
+                tmp="$(mktemp)"
+                if [[ "$first" =~ ^\!\ Version:\  ]]; then
+                  { echo "$header"; tail -n +2 "$f"; } > "$tmp"
+                else
+                  { echo "$header"; cat "$f"; } > "$tmp"
+                fi
+                mv "$tmp" "$f"
+              done
+
+      - name: Commit and push
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if git status --porcelain | grep -q .; then
+            git config user.name "aiwao-ubo-filter-versioner[bot]"
+            git config user.email "aiwao-ubo-filter-versioner[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "chore: update version [bot]"
+            git push
+          else
+            echo "No changes to commit."
+          fi
