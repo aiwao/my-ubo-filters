@@ -1,5 +1,5 @@
 ! Version: git-a334612
-! Title: youtube filters by aiwao!
+! Title: youtube filters by aiwao
 ! Homepage: https://github.com/aiwao/my-ubo-filters
 
 ! Disable youtube shorts feed
